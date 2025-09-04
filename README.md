@@ -7,7 +7,7 @@ Runs locally; supports text-only or voice I/O on macOS.
 ```bash
 python -m venv .venv && source .venv/bin/activate
 pip install -r requirements.txt
-python -m app.ui.cli --backend=mock
+python -m app.ui.cli --backend=real
 ```
 
 ## Voice I/O (macOS, offline)
