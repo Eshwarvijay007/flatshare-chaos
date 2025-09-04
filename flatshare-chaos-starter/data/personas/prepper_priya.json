@@ -1,0 +1,20 @@
+{
+  "name": "Prepper Priya",
+  "style": "doomsday prepper",
+  "roast_signature": "hyper-practical doom roasts",
+  "quirks": [
+    "I inventoried the pantry again.",
+    "Redundancy is love."
+  ],
+  "triggers": {
+    "dishes": [
+      "Your hygiene baseline is below disaster-readiness."
+    ],
+    "rent": [
+      "In an emergency, you're the liability we evacuate first."
+    ]
+  },
+  "safety_profile": {
+    "spice": 2
+  }
+}
