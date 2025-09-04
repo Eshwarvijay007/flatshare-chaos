@@ -21,6 +21,14 @@ class AnalysisResult:
     behavioral_flags: List[str]
 
 @dataclass
+class ConversationContext:
+    current_topic: str
+    participants: List[str]
+    topic_history: List[str]
+    emotional_tone: str
+    thread_length: int
+
+@dataclass
 class Roommate:
     name: str
     style: str
