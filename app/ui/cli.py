@@ -3,6 +3,7 @@ from __future__ import annotations
 
 import argparse
 import sys
+import time
 from typing import Tuple, List, Any
 from rich.console import Console
 
@@ -22,6 +23,30 @@ except Exception:
 
 console = Console()
 
+# ──────────────────────────────────────────────────────────────────────────────
+# Config: colors & timing
+# ──────────────────────────────────────────────────────────────────────────────
+
+# Rich styles per roommate (tweak as you like)
+CHARACTER_COLORS = {
+    "Corporate Carl": "bold cyan",
+    "Party Pete": "magenta",
+    "Ghost Gina": "dim white",
+    "Lo-fi Luna": "green",
+    "Prepper Priya": "yellow",
+    # fallback color used if roommate not in this map
+    "_default": "white",
+    # color for the "You: ..." prefix
+    "_you": "bold white",
+}
+
+# Pause per streamed chunk (seconds). Increase to slow down typing effect.
+PAUSE_S = 0.03
+
+
+# ──────────────────────────────────────────────────────────────────────────────
+# Helpers
+# ──────────────────────────────────────────────────────────────────────────────
 
 def parse_spoken_line(line: str) -> Tuple[str | None, str | None]:
     """Split 'Name: text' → (Name, text). Returns (None, None) if not matched."""
@@ -41,13 +66,11 @@ def _load_roommates_module() -> Any | None:
       2) roommates      (repo_root/roommates.py)
     Return the module or None.
     """
-    # Try app.roommates
     try:
         from app import roommates as rm  # type: ignore
         return rm
     except Exception:
         pass
-    # Try top-level roommates
     try:
         import roommates as rm  # type: ignore
         return rm
@@ -64,7 +87,7 @@ def load_roommates() -> List[object]:
     """
     rm = _load_roommates_module()
 
-    # 1) Use provided list if present and non-empty
+    # 1) Provided list
     if rm is not None and hasattr(rm, "ROOMMATES"):
         try:
             lst = getattr(rm, "ROOMMATES")
@@ -73,7 +96,7 @@ def load_roommates() -> List[object]:
         except Exception:
             pass
 
-    # 2) Try factory functions if defined
+    # 2) Factory functions
     if rm is not None:
         for fn_name in ("default_roommates", "make_roommates", "build_roommates"):
             if hasattr(rm, fn_name):
@@ -85,7 +108,7 @@ def load_roommates() -> List[object]:
                 except Exception:
                     pass
 
-    # 3) Build inline defaults. If roommates.Roommate exists, use it; else use a simple fallback class.
+    # 3) Inline defaults
     if rm is not None and hasattr(rm, "Roommate"):
         R = getattr(rm, "Roommate")
     else:
@@ -188,6 +211,10 @@ def build_engine(adapter, spice: int) -> Engine:
     return Engine(roommates=rms, backend=adapter, spice=spice, max_roasts_per_turn=4)
 
 
+# ──────────────────────────────────────────────────────────────────────────────
+# Main
+# ──────────────────────────────────────────────────────────────────────────────
+
 def main():
     parser = argparse.ArgumentParser(description="Flatshare Chaos: Roast Edition (CLI)")
     parser.add_argument(
@@ -200,6 +227,7 @@ def main():
     parser.add_argument("--stream", action="store_true", help="Stream tokens live")
     # Voice is intentionally disabled (no-op)
     parser.add_argument("--voice", action="store_true", help="(disabled)")
+    # Optional: override pause/color via flags later if you want
     args = parser.parse_args()
 
     adapter = build_adapter(stream=args.stream)
@@ -222,18 +250,47 @@ def main():
             break
 
         if args.stream:
-            # live streaming path
+            # Streaming with per-roommate colors + pause per chunk
+            current_speaker: str | None = None
+            current_style: str = CHARACTER_COLORS["_default"]
+
             for chunk in engine.turn_stream(user_msg):
-                console.print(chunk, end="")
+                # Newline indicates speaker finished
+                if chunk == "\n":
+                    console.print()  # newline
+                    current_speaker = None
+                    current_style = CHARACTER_COLORS["_default"]
+                    time.sleep(PAUSE_S)
+                    continue
+
+                # Detect a speaker prefix (the engine yields "<Name>: " once before content)
+                if chunk.endswith(": ") and ":" in chunk:
+                    speaker = chunk.split(":", 1)[0].strip()
+                    current_speaker = speaker
+                    if speaker == "You":
+                        current_style = CHARACTER_COLORS.get("_you", "bold white")
+                    else:
+                        current_style = CHARACTER_COLORS.get(speaker, CHARACTER_COLORS["_default"])
+                    console.print(chunk, style=current_style, end="")
+                else:
+                    # Regular content chunk; use the last known speaker style
+                    console.print(chunk, style=current_style, end="")
+
                 sys.stdout.flush()
-            console.print()  # ensure final newline
-            # render leaderboard here if you keep one
+                time.sleep(PAUSE_S)
+
+            # Ensure final newline after turn
+            console.print()
+
         else:
-            # legacy non-stream path
+            # Legacy non-stream path (no typewriter, no per-chunk pause)
             lines = engine.turn(user_msg)
             for line in lines:
-                console.print(line)
-            # render leaderboard here if you keep one
+                who, _ = parse_spoken_line(line)
+                style = CHARACTER_COLORS.get(who or "", CHARACTER_COLORS["_default"])
+                if who == "You":
+                    style = CHARACTER_COLORS.get("_you", "bold white")
+                console.print(line, style=style)
 
 
 if __name__ == "__main__":
