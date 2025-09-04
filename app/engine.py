@@ -36,18 +36,59 @@ class Engine:
         self.backend = backend  # may also be known as "adapter" elsewhere
         self.spice = spice
         self.max_roasts_per_turn = max_roasts_per_turn
+        self.conversation_history: List[str] = []  # Track conversation history
+        self.max_history = 10  # Keep last 10 exchanges
+    
+    def _build_context(self) -> str:
+        """Build conversation context from recent history."""
+        if not self.conversation_history:
+            return "CONVERSATION CONTEXT: This is the start of the conversation."
+        
+        # Get recent history (last few exchanges)
+        recent_history = self.conversation_history[-6:]  # Last 6 messages
+        context = "RECENT CONVERSATION:\n" + "\n".join(recent_history)
+        return context
+    
+    def _add_to_history(self, message: str):
+        """Add message to conversation history."""
+        self.conversation_history.append(message)
+        # Keep only recent history
+        if len(self.conversation_history) > self.max_history:
+            self.conversation_history = self.conversation_history[-self.max_history:]
 
     # -----------------------
     # Existing non-stream path
     # -----------------------
     def primary(self, r: Roommate, user_msg: str) -> str:
-        sys = f"You are {r.name}, style '{r.style}'. Be concise, witty, PG-13."
+        # Build context-aware system prompt
+        context = self._build_context()
+        sys = f"""You are {r.name}, style '{r.style}'. Be concise, witty, PG-13.
+
+PERSONALITY DETAILS:
+- Roast signature: {r.roast_signature}
+- Quirks: {', '.join(r.quirks) if hasattr(r, 'quirks') and r.quirks else 'None'}
+
+{context}
+
+Respond in character, referencing the conversation history when relevant."""
+        
         usr = f"User: {user_msg}"
         out = self.backend.generate(sys, usr, 0.7, 64).strip()
         return f"{r.name}: {out}"
 
     def roast(self, r: Roommate, target: str, user_msg: str) -> str:
-        sys = f"You are {r.name}. Single-line roast for {target} in style: {r.roast_signature}. Keep it tight."
+        # Build context-aware roast prompt
+        context = self._build_context()
+        sys = f"""You are {r.name}. Single-line roast for {target} in style: {r.roast_signature}. Keep it tight.
+
+PERSONALITY DETAILS:
+- Style: {r.style}
+- Quirks: {', '.join(r.quirks) if hasattr(r, 'quirks') and r.quirks else 'None'}
+
+{context}
+
+Make the roast reference the conversation history or the target's previous behavior when possible."""
+        
         usr = f"User: {user_msg}"
         out = self.backend.generate(sys, usr, 0.8, 64).strip()
         return f"{r.name}: {out}"
@@ -55,16 +96,27 @@ class Engine:
     def turn(self, user_msg: str) -> List[str]:
         """Legacy non-streaming turn. Returns a list of fully-formed lines."""
         lines: List[str] = [f"You: {user_msg}"]
+        
+        # Add user message to history
+        self._add_to_history(f"You: {user_msg}")
 
         primary = random.choice(self.roommates)
-        lines.append(self.primary(primary, user_msg))
+        primary_response = self.primary(primary, user_msg)
+        lines.append(primary_response)
+        
+        # Add primary response to history
+        self._add_to_history(primary_response)
 
         targets = ["you", primary.name]
         roasters = random.sample(self.roommates, k=min(len(self.roommates), self.max_roasts_per_turn))
         n = random.randint(2, min(self.max_roasts_per_turn, len(roasters)))
         for r in roasters[:n]:
             tgt = random.choice(targets)
-            lines.append(self.roast(r, tgt, user_msg))
+            roast_response = self.roast(r, tgt, user_msg)
+            lines.append(roast_response)
+            
+            # Add roast to history
+            self._add_to_history(roast_response)
 
         return lines
 
@@ -99,19 +151,55 @@ class Engine:
                 yield text
 
     def primary_stream(self, r: Roommate, user_msg: str) -> Iterator[str]:
-        sys = f"You are {r.name}, style '{r.style}'. Be concise, witty, PG-13."
+        # Build context-aware system prompt
+        context = self._build_context()
+        sys = f"""You are {r.name}, style '{r.style}'. Be concise, witty, PG-13.
+
+PERSONALITY DETAILS:
+- Roast signature: {r.roast_signature}
+- Quirks: {', '.join(r.quirks) if hasattr(r, 'quirks') and r.quirks else 'None'}
+
+{context}
+
+Respond in character, referencing the conversation history when relevant."""
+        
         usr = f"User: {user_msg}"
         # Prefix speaker once, then stream content
         yield f"{r.name}: "
+        
+        response_parts = []
         for chunk in self._gen_stream(sys, usr, 0.7, 64):
+            response_parts.append(chunk)
             yield chunk
+        
+        # Add complete response to history
+        complete_response = f"{r.name}: {''.join(response_parts)}"
+        self._add_to_history(complete_response)
 
     def roast_stream(self, r: Roommate, target: str, user_msg: str) -> Iterator[str]:
-        sys = f"You are {r.name}. Single-line roast for {target} in style: {r.roast_signature}. Keep it tight."
+        # Build context-aware roast prompt
+        context = self._build_context()
+        sys = f"""You are {r.name}. Single-line roast for {target} in style: {r.roast_signature}. Keep it tight.
+
+PERSONALITY DETAILS:
+- Style: {r.style}
+- Quirks: {', '.join(r.quirks) if hasattr(r, 'quirks') and r.quirks else 'None'}
+
+{context}
+
+Make the roast reference the conversation history or the target's previous behavior when possible."""
+        
         usr = f"User: {user_msg}"
         yield f"{r.name}: "
+        
+        response_parts = []
         for chunk in self._gen_stream(sys, usr, 0.8, 64):
+            response_parts.append(chunk)
             yield chunk
+        
+        # Add complete roast to history
+        complete_roast = f"{r.name}: {''.join(response_parts)}"
+        self._add_to_history(complete_roast)
 
     def turn_stream(self, user_msg: str) -> Iterator[str]:
         """
@@ -121,6 +209,9 @@ class Engine:
         - stream a few roasters
         """
         yield f"You: {user_msg}\n"
+        
+        # Add user message to history
+        self._add_to_history(f"You: {user_msg}")
 
         primary = random.choice(self.roommates)
         for chunk in self.primary_stream(primary, user_msg):

@@ -6,6 +6,8 @@ import sys
 import time
 from typing import Tuple, List, Any
 from rich.console import Console
+from rich.table import Table
+from rich.panel import Panel
 
 # Engine
 from app.engine import Engine
@@ -29,11 +31,22 @@ console = Console()
 
 # Rich styles per roommate (tweak as you like)
 CHARACTER_COLORS = {
+    # Original roommates
     "Corporate Carl": "bold cyan",
     "Party Pete": "magenta",
     "Ghost Gina": "dim white",
     "Lo-fi Luna": "green",
     "Prepper Priya": "yellow",
+    # New personality roommates
+    "CodeMaster": "bright_blue",
+    "SavageBurn": "bright_red", 
+    "UncleJi": "yellow",
+    "ChefCritic": "green",
+    "BeatDrop": "magenta",
+    "ChaosKing": "bright_black",
+    "QuietStorm": "cyan",
+    "PennyPincher": "bright_yellow",
+    "DeepThought": "bright_magenta",
     # fallback color used if roommate not in this map
     "_default": "white",
     # color for the "You: ..." prefix
@@ -42,6 +55,72 @@ CHARACTER_COLORS = {
 
 # Pause per streamed chunk (seconds). Increase to slow down typing effect.
 PAUSE_S = 0.03
+
+
+def display_roommate_intro():
+    """Display an introduction to all the unique roommates."""
+    console.print("\n[bold bright_cyan]🏠 Welcome to the Flatshare Chaos! 🏠[/bold bright_cyan]")
+    console.print("[dim]Meet your chaotic roommates...[/dim]\n")
+    
+    try:
+        from app.personality_profiles import create_flatshare_chaos_roommates
+        roommates = create_flatshare_chaos_roommates()
+        
+        table = Table(show_header=True, header_style="bold magenta")
+        table.add_column("Roommate", style="bold", width=12)
+        table.add_column("Personality", width=20)
+        table.add_column("Signature Style", width=30)
+        table.add_column("Key Quirk", width=25)
+        
+        personality_descriptions = {
+            "CodeMaster": ("Tech Nerd", "Technical superiority burns", "Uses programming terms daily"),
+            "SavageBurn": ("Professional Roaster", "Devastating one-liners", "Never misses a roast opportunity"),
+            "UncleJi": ("Indian Uncle", "Disappointed uncle energy", "Compares everything to India"),
+            "ChefCritic": ("Food Snob", "Culinary superiority complex", "Judges everyone's cooking"),
+            "BeatDrop": ("DJ Party Guy", "Music-based burns", "Life revolves around beats"),
+            "ChaosKing": ("Messy Rebel", "Chaotic deflection", "Organized chaos is still organized"),
+            "QuietStorm": ("Shy Observer", "Innocent savage burns", "Soft-spoken but deadly"),
+            "PennyPincher": ("Extreme Cheapskate", "Money-shaming guilt trips", "Calculates cost of everything"),
+            "DeepThought": ("Overthinking Philosopher", "Existential confusion", "Turns everything into philosophy")
+        }
+        
+        for roommate in roommates:
+            name = roommate.name
+            desc, style, quirk = personality_descriptions.get(name, ("Unknown", "Generic", "Mysterious"))
+            color = CHARACTER_COLORS.get(name, "white")
+            table.add_row(
+                f"[{color}]{name}[/{color}]",
+                desc,
+                style,
+                quirk
+            )
+        
+        console.print(table)
+        console.print("\n[dim]Each roommate has unique triggers, speech patterns, and interaction dynamics![/dim]")
+        console.print("[dim]Type 'help' for available commands.[/dim]\n")
+        
+    except Exception:
+        # Fallback for original roommates
+        console.print("[dim]Using original roommate personalities...[/dim]\n")
+
+
+def display_help():
+    """Display available commands."""
+    help_panel = Panel(
+        """[bold]Available Commands:[/bold]
+
+• [cyan]help[/cyan] - Show this help message
+• [cyan]personalities[/cyan] - Show roommate personality profiles  
+• [cyan]exit/quit[/cyan] - Leave the flatshare
+
+[bold]How it works:[/bold]
+Each roommate has a unique personality with specific triggers, speech patterns, and roasting styles. 
+They respond differently based on the topic and their individual quirks.
+Just chat naturally and watch the chaos unfold!""",
+        title="[bold bright_cyan]Flatshare Chaos Help[/bold bright_cyan]",
+        border_style="cyan"
+    )
+    console.print(help_panel)
 
 
 # ──────────────────────────────────────────────────────────────────────────────
@@ -81,10 +160,18 @@ def _load_roommates_module() -> Any | None:
 def load_roommates() -> List[object]:
     """
     Load roommates robustly:
-      - Prefer ROOMMATES from roommates module
-      - Else try factory functions
-      - Else build inline defaults with a simple compatible class
+      - Try to use new personality system first
+      - Fall back to original roommates if needed
     """
+    try:
+        # Try to use the new personality system
+        from app.personality_profiles import create_flatshare_chaos_roommates
+        roommates = create_flatshare_chaos_roommates()
+        if roommates:
+            return roommates
+    except Exception:
+        pass
+    
     rm = _load_roommates_module()
 
     # 1) Provided list
@@ -208,6 +295,8 @@ def build_engine(adapter, spice: int) -> Engine:
     rms = load_roommates()
     if not rms:
         raise RuntimeError("No roommates available. Ensure roommates.ROOMMATES or defaults are present.")
+    
+    # Always use the original engine for now - it works better
     return Engine(roommates=rms, backend=adapter, spice=spice, max_roasts_per_turn=4)
 
 
@@ -233,21 +322,32 @@ def main():
     adapter = build_adapter(stream=args.stream)
     engine = build_engine(adapter=adapter, spice=args.spice)
 
+    # Display intro
+    display_roommate_intro()
+
     console.print(
-        "───────────────────────────────────────────────────────── Flatshare Chaos: Roast Edition (CLI) ──────────────────────────────────────────────────────────"
+        "───────────────────────────────────────────────────────── [bold bright_cyan]Flatshare Chaos: Roast Edition (CLI)[/bold bright_cyan] ──────────────────────────────────────────────────────────"
     )
     while True:
         try:
-            user_msg = input("> : ").strip()
+            user_msg = input("> ").strip()
         except (EOFError, KeyboardInterrupt):
-            console.print("\nBye!")
+            console.print("\n[bright_cyan]Thanks for visiting the chaos! 👋[/bright_cyan]")
             break
 
         if not user_msg:
             continue
+            
+        # Handle special commands
         if user_msg.lower() in {"exit", "quit"}:
-            console.print("\nBye!")
+            console.print("\n[bright_cyan]Thanks for visiting the chaos! 👋[/bright_cyan]")
             break
+        elif user_msg.lower() == "personalities":
+            display_roommate_intro()
+            continue
+        elif user_msg.lower() == "help":
+            display_help()
+            continue
 
         if args.stream:
             # Streaming with per-roommate colors + pause per chunk
