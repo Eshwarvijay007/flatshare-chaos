@@ -1,0 +1,23 @@
+{
+  "enabled": true,
+  "name": "Test File Cleanup",
+  "description": "Automatically deletes test files once testing is completed to maintain a clean workspace",
+  "version": "1",
+  "when": {
+    "type": "userTriggered",
+    "patterns": [
+      "test_*.py",
+      "*_test.py",
+      "tests/*.py",
+      "**/*test*.py",
+      "pytest.ini",
+      "test-results.xml",
+      ".coverage",
+      "htmlcov/**"
+    ]
+  },
+  "then": {
+    "type": "askAgent",
+    "prompt": "Test execution has completed. Please identify and delete all test-related files including test scripts, test results, coverage reports, and temporary test artifacts to clean up the workspace."
+  }
+}

@@ -15,8 +15,8 @@ python3.11 run.py
 ```
 
 ### Option 3: Advanced Python Script
-```bash
-python3.11 start_servers.py
+python3.11 start_servers.py```bash
+
 ```
 
 ## 📋 What These Scripts Do

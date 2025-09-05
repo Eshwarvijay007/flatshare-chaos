@@ -56,3 +56,9 @@ class EnhancedRoommate(Roommate):
     
     # Cultural context for roasting
     cultural_context: Dict[str, Any] = field(default_factory=dict)
+
+    # Anti-triggers for out-of-character moments
+    anti_triggers: Dict[str, str] = field(default_factory=dict)
+
+    # Conversational goals
+    conversational_goals: List[str] = field(default_factory=list)
