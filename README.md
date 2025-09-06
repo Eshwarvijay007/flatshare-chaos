@@ -76,3 +76,7 @@ This project uses a client-server architecture to create a dynamic, multi-agent 
 *   **Speech-to-Text**: Vosk
 *   **Text-to-Speech**: pyttsx3 (utilizing native macOS voices)
 *   **HTTP Client**: httpx (for async requests to the model server)
+
+## Contribution
+
+This project is the result of a solo development effort. Every part of this project, from the initial concept and architecture to the final code, was built from scratch by a single contributor.
