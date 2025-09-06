@@ -7,8 +7,7 @@ GENERIC = [
     "Rent is a constraint, not an excuse.",
     "That idea had less life than my cactus.",
     "Even your excuses are underperforming KPIs.",
-    "Party Pete thinks you need shots, not strategies.",
-    "Ghost Gina saw more spirit in an empty room.",
+    
 ]
 
 class MockAdapter(LLMAdapter):

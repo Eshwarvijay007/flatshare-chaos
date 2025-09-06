@@ -77,8 +77,7 @@ This feature enhances the Flatshare Chaos application by implementing a sophisti
 #### Acceptance Criteria
 
 1. WHEN a roommate is configured THEN they SHALL have a defined roasting strategy (aggressive, passive-aggressive, witty, absurd, indian-style)
-2. WHEN Corporate Carl roasts someone THEN he SHALL use business jargon and performance metrics
-3. WHEN Ghost Gina roasts someone THEN she SHALL reference being overlooked or invisible
+
 4. WHEN an Indian-style roommate roasts someone THEN they SHALL use cultural references, family comparisons, academic achievements, and food-related humor
 5. WHEN a roommate's roast gets a strong reaction THEN they SHALL either escalate or back down based on their personality
 6. WHEN multiple roommates target the same person THEN they SHALL coordinate their approach based on their relationships

@@ -1,33 +1,84 @@
 # Flatshare Chaos: Roast Edition (macOS, offline-first)
 
-An offline multi-agent roommate simulator where distinct AI roommates roast you and each other.
-Runs locally; supports text-only or voice I/O on macOS.
+An offline multi-agent roommate simulator for macOS where distinct AI roommates, powered by the `gpt-oss:20b` model, roast you and each other.
 
-## Quickstart (Text-only)
+## Getting Started
+
+### Prerequisites
+- macOS
+- Python 3.11+
+
+### 1. Setup Environment
+First, create and activate a Python virtual environment:
 ```bash
-python -m venv .venv && source .venv/bin/activate
+python3.11 -m venv .venv
+source .venv/bin/activate
+```
+
+### 2. Install Dependencies
+Install the required Python packages:
+```bash
 pip install -r requirements.txt
-python -m app.ui.cli --backend=real
 ```
 
-## Voice I/O (macOS, offline)
-1) Install extra voices (System Settings → Accessibility → Spoken Content → Manage Voices…)
-2) List voices: `say -v '?'`
-3) Install audio libs:
+### 3. Run the Backend Servers
+In a terminal window, run the `start.sh` script to launch the model server and the application backend. 
+
+First, make the script executable:
 ```bash
-pip install pyttsx3 sounddevice vosk
+chmod +x start.sh
 ```
-4) Download a small Vosk English model and put it under `models/vosk-en-small/`.
-
-Run:
+Then run it:
 ```bash
-python -m app.ui.cli --backend=mock --voice --mic --vosk-model models/vosk-en-small
+./start.sh
 ```
+Keep this script running. It will manage all the necessary server processes.
 
-## LM Studio backend (optional, real LLM)
+### 4. Run the Client Interface
+Once the servers are running, open a **new terminal window** to run the user interface.
+
+#### Text-Only Mode
+To interact with the roommates via a text-only interface, run the following command:
 ```bash
-export OPENAI_API_BASE=http://localhost:1234/v1
-export OPENAI_API_KEY=not-needed
-python -m app.ui.cli --backend=lmstudio --spice=2
+python3.11 -m app.ui.cli --stream --spice=2
 ```
 
+#### Voice Mode (macOS)
+For the full voice-interactive experience on macOS, you'll need to install some extra audio libraries first.
+
+1.  **Install Audio Libraries**:
+    ```bash
+    pip install pyttsx3 sounddevice vosk
+    ```
+2.  **Download Speech-to-Text Model**:
+    Download a small [Vosk English model](https://alphacephei.com/vosk/models) and place its contents in the `models/vosk-en-small/` directory.
+
+3.  **(Optional) Install Better TTS Voices**:
+    For more natural-sounding roommates, you can install enhanced voices via `System Settings → Accessibility → Spoken Content → System Voice → Manage Voices…`.
+
+Once the setup is complete, run the application with the voice flags in your new terminal:
+```bash
+python3.11 -m app.ui.cli --voice --mic --vosk-model models/vosk-en-small
+```
+
+## Architecture and Tools
+
+This project uses a client-server architecture to create a dynamic, multi-agent simulation.
+
+*   **Backend Server**: A **FastAPI** server acts as the central brain. It receives requests from the client, queries the language model, and manages the state of the simulation.
+
+*   **Core Simulation Engine**: The `app` directory contains the core logic, with separate modules for managing:
+    *   **Personalities**: Crafts prompts and context for each AI agent.
+    *   **Moods**: Tracks and modifies the mood of each roommate.
+    *   **Relationships**: Manages the evolving relationships between agents.
+
+*   **Language Model**: The personalities are powered by a locally-run `gpt-oss:20b` model, which is orchestrated by the backend.
+
+*   **Client Interface**: The primary interface is a Python-based Command-Line Interface (CLI) built using `argparse`.
+
+### Key Libraries and Tools
+*   **Language**: Python 3.11
+*   **Backend**: FastAPI
+*   **Speech-to-Text**: Vosk
+*   **Text-to-Speech**: pyttsx3 (utilizing native macOS voices)
+*   **HTTP Client**: httpx (for async requests to the model server)

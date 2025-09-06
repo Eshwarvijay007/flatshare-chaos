@@ -8,10 +8,7 @@ OLLAMA_URL = os.getenv("OLLAMA_URL", "http://127.0.0.1:11434")
 OLLAMA_MODEL = os.getenv("OLLAMA_MODEL", "llama3.1")
 
 CHAR_PROMPTS: Dict[str, str] = {
-    "Corporate Carl": "You are Corporate Carl. KPI/OKR manager-speak. Roast crisply.",
-    "Ghost Gina": "You are Ghost Gina. Non-committal, airy, vanishes. Roast gently but cutting.",
-    "Party Pete": "You are Party Pete. High energy, chaotic, cheeky roasts.",
-    "Prepper Priya": "You are Prepper Priya. Survivalist tough-love roasts."
+    
 }
 
 class RoastReq(BaseModel):

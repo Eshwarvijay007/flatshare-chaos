@@ -6,11 +6,7 @@ from piper.voice import PiperVoice
 
 # --- Voice Model Management ---
 VOICE_MAP = {
-    "Corporate Carl": "en_US-lessac-medium.onnx",
-    "Party Pete": "en_US-ryan-medium.onnx",
-    "Ghost Gina": "en_GB-semaine-medium.onnx",
-    "Lo-fi Luna": "en_US-ljspeech-medium.onnx",
-    "Prepper Priya": "en_GB-alan-low.onnx",
+    
     # Add mappings for other personalities as you download models
     "CodeMaster": "en_US-lessac-medium.onnx",
     "SavageBurn": "en_US-ryan-medium.onnx",
@@ -29,7 +25,7 @@ class AudioManager:
     def __init__(self, model_dir: str = "models/piper"):
         self.voices = {}
         self.model_dir = model_dir
-        print("Audio Manager: Initializing voices...")
+        #print("Audio Manager: Initializing voices...")
         self._load_voices()
 
     def _load_voices(self):
@@ -44,7 +40,7 @@ class AudioManager:
             if os.path.exists(model_path):
                 try:
                     self.voices[name] = PiperVoice.load(model_path)
-                    print(f"  - Loaded voice for: {name}")
+                    #print(f"  - Loaded voice for: {name}")
                 except Exception as e:
                     print(f"Error loading voice for {name}: {e}")
             else:

@@ -33,11 +33,7 @@ console = Console()
 # Rich styles per roommate (tweak as you like)
 CHARACTER_COLORS = {
     # Original roommates
-    "Corporate Carl": "bold cyan",
-    "Party Pete": "magenta",
-    "Ghost Gina": "dim white",
-    "Lo-fi Luna": "green",
-    "Prepper Priya": "yellow",
+    
     # New personality roommates
     "CodeMaster": "bright_blue",
     "SavageBurn": "bright_red", 
@@ -223,58 +219,7 @@ def load_roommates() -> List[object]:
         )
 
     defaults = [
-        mk(
-            "Corporate Carl",
-            "overly corporate",
-            "formal corporate jargon",
-            quirks=["circle back on your choices", "action items: grow up"],
-            triggers={
-                "rent": ["This rent discussion lacks ownership and deliverables."],
-                "dishes": ["Your dish KPIs are trending to zero—like your standards."],
-                "tired": ["Your burn rate exceeds your outcomes."],
-            },
-        ),
-        mk(
-            "Party Pete",
-            "party animal",
-            "savage frat bro energy",
-            quirks=["shot o'clock somewhere", "playlist louder than ambition"],
-            triggers={
-                "rent": ["If vibes paid rent, you'd be landlord."],
-                "dishes": ["Those plates seen more action than your DMs."],
-                "wallet": ["Lost wallet? Lost plot."],
-            },
-        ),
-        mk(
-            "Ghost Gina",
-            "spooky minimalist",
-            "cryptic and dark humor",
-            quirks=["the veil is thin today", "floated past your motivation—didn’t see it"],
-            triggers={
-                "tired": ["Even the dead have more energy."],
-                "lost": ["You are the missing person in your own story."],
-            },
-        ),
-        mk(
-            "Lo-fi Luna",
-            "lo-fi producer poet",
-            "half-poetic jabs",
-            quirks=["looping a beat from your excuses", "vinyl crackle, like your backbone"],
-            triggers={
-                "clean": ["dust on the shelf, dust in your drive."],
-                "rent": ["bills spin like records; you don’t."],
-            },
-        ),
-        mk(
-            "Prepper Priya",
-            "doomsday prepper",
-            "hyper-practical doom roasts",
-            quirks=["I inventoried the pantry again", "Redundancy is love"],
-            triggers={
-                "dishes": ["Your hygiene baseline is below disaster-readiness."],
-                "rent": ["In an emergency, you're the liability we evacuate first."],
-            },
-        ),
+        
     ]
     return defaults
 
