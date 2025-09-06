@@ -6,7 +6,7 @@ from typing import Iterator
 class OllamaStreamingAdapter:
     def __init__(self, base_url: str | None = None, model: str | None = None, timeout: int = 60):
         self.base_url = base_url or os.getenv("OLLAMA_URL", "http://127.0.0.1:11434")
-        self.model = model or os.getenv("MODEL_NAME", "mistral:7b")
+        self.model = model or os.getenv("MODEL_NAME", "gpt-oss:20b")
         self.timeout = timeout
 
     def _prompt(self, system_prompt: str, user_prompt: str) -> str:

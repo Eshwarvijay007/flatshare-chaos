@@ -22,17 +22,11 @@ pip install -r requirements.txt
 ```
 
 ### 3. Run the Backend Servers
-In a terminal window, run the `start.sh` script to launch the model server and the application backend. 
-
-First, make the script executable:
+In a terminal window, run one of the provided Python scripts to launch the model server and the application backend. The recommended script is `run.py`:
 ```bash
-chmod +x start.sh
+python3.11 run.py
 ```
-Then run it:
-```bash
-./start.sh
-```
-Keep this script running. It will manage all the necessary server processes.
+This script will start all the necessary server processes and keep them running.
 
 ### 4. Run the Client Interface
 Once the servers are running, open a **new terminal window** to run the user interface.
