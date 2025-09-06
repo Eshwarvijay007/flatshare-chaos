@@ -101,16 +101,16 @@ def start_fastapi():
 
 def ensure_model():
     """Ensure the required model is available."""
-    print_colored("📋 Checking for llama3.1 model...", "blue")
+    print_colored("📋 Checking for mistral:7b model...", "blue")
     try:
         result = subprocess.run(["ollama", "list"], capture_output=True, text=True)
-        if "llama3.1" in result.stdout:
-            print_colored("✅ Model llama3.1 is available", "green")
+        if "mistral:7b" in result.stdout:
+            print_colored("✅ Model mistral:7b is available", "green")
             return
         
-        print_colored("📥 Pulling llama3.1 model... (this may take a while)", "yellow")
-        subprocess.run(["ollama", "pull", "llama3.1"], check=True)
-        print_colored("✅ Model llama3.1 pulled successfully", "green")
+        print_colored("📥 Pulling mistral:7b model... (this may take a while)", "yellow")
+        subprocess.run(["ollama", "pull", "mistral:7b"], check=True)
+        print_colored("✅ Model mistral:7b pulled successfully", "green")
         
     except subprocess.CalledProcessError:
         print_colored("❌ Failed to pull model", "red")

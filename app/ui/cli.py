@@ -11,6 +11,7 @@ from rich.panel import Panel
 
 # Engine
 from app.engine import Engine
+from app.audio_manager import AudioManager
 
 # Adapters
 try:
@@ -314,13 +315,16 @@ def main():
     )
     parser.add_argument("--spice", type=int, default=2)
     parser.add_argument("--stream", action="store_true", help="Stream tokens live")
-    # Voice is intentionally disabled (no-op)
-    parser.add_argument("--voice", action="store_true", help="(disabled)")
+    parser.add_argument("--voice", action="store_true", help="Enable text-to-speech voice output.")
     # Optional: override pause/color via flags later if you want
     args = parser.parse_args()
 
     adapter = build_adapter(stream=args.stream)
     engine = build_engine(adapter=adapter, spice=args.spice)
+    
+    audio_manager = None
+    if args.voice:
+        audio_manager = AudioManager()
 
     # Display intro
     display_roommate_intro()
@@ -353,13 +357,24 @@ def main():
             # Streaming with per-roommate colors + pause per chunk
             current_speaker: str | None = None
             current_style: str = CHARACTER_COLORS["_default"]
+            full_line_buffer = ""
+
 
             for chunk in engine.turn_stream(user_msg):
                 # Newline indicates speaker finished
                 if chunk == "\n":
+                    if audio_manager and current_speaker and full_line_buffer:
+                        # Only use TTS for roommates (not "You"), and clean the text
+                        if current_speaker != "You" and current_speaker in audio_manager.voices:
+                            # Remove any speaker prefix that might be in the buffer
+                            clean_text = full_line_buffer.strip()
+                            if clean_text:
+                                audio_manager.say(clean_text, current_speaker)
+
                     console.print()  # newline
                     current_speaker = None
                     current_style = CHARACTER_COLORS["_default"]
+                    full_line_buffer = ""
                     time.sleep(PAUSE_S)
                     continue
 
@@ -374,6 +389,7 @@ def main():
                     console.print(chunk, style=current_style, end="")
                 else:
                     # Regular content chunk; use the last known speaker style
+                    full_line_buffer += chunk
                     console.print(chunk, style=current_style, end="")
 
                 sys.stdout.flush()
@@ -386,12 +402,21 @@ def main():
             # Legacy non-stream path (no typewriter, no per-chunk pause)
             lines = engine.turn(user_msg)
             for line in lines:
-                who, _ = parse_spoken_line(line)
+                who, text = parse_spoken_line(line)
                 style = CHARACTER_COLORS.get(who or "", CHARACTER_COLORS["_default"])
                 if who == "You":
                     style = CHARACTER_COLORS.get("_you", "bold white")
+                
                 console.print(line, style=style)
 
+                if audio_manager and who and text:
+                    # Only use TTS for roommates (not "You"), and ensure they have voices
+                    if who != "You" and who in audio_manager.voices:
+                        audio_manager.say(text, who)
 
+
+
+if __name__ == "__main__":
+    main()
 if __name__ == "__main__":
     main()
